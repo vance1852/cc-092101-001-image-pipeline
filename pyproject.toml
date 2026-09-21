@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "image-pipeline"
+version = "0.1.0"
+description = "Pure backend image batch processing CLI with node-graph pipelines"
+requires-python = ">=3.8"
+dependencies = [
+    "Pillow>=9.0.0",
+]
+
+[project.scripts]
+imgpipe = "image_pipeline.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["image_pipeline*"]

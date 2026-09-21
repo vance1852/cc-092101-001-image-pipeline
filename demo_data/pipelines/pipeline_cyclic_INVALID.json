@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "name": "invalid_cyclic_pipeline",
+  "description": "This pipeline contains a cycle and should be rejected.",
+  "nodes": [
+    {
+      "id": "in",
+      "type": "input"
+    },
+    {
+      "id": "gray",
+      "type": "grayscale"
+    },
+    {
+      "id": "loopA",
+      "type": "grayscale"
+    },
+    {
+      "id": "loopB",
+      "type": "brightness",
+      "params": {
+        "value": 10
+      }
+    },
+    {
+      "id": "loopC",
+      "type": "contrast",
+      "params": {
+        "value": 1.1
+      }
+    },
+    {
+      "id": "out",
+      "type": "output"
+    }
+  ],
+  "edges": [
+    {
+      "from": "in",
+      "to": "gray"
+    },
+    {
+      "from": "gray",
+      "to": "out"
+    },
+    {
+      "from": "loopA",
+      "to": "loopB"
+    },
+    {
+      "from": "loopB",
+      "to": "loopC"
+    },
+    {
+      "from": "loopC",
+      "to": "loopA"
+    }
+  ]
+}

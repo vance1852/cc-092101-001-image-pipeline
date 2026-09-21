@@ -1,0 +1,59 @@
+{
+  "version": "1.0",
+  "name": "sample_grayscale_threshold_pipeline",
+  "description": "Example: convert to grayscale, threshold at 128, light box blur, write as PNG",
+  "nodes": [
+    {
+      "id": "in",
+      "type": "input"
+    },
+    {
+      "id": "gray",
+      "type": "grayscale"
+    },
+    {
+      "id": "thresh",
+      "type": "threshold",
+      "params": {
+        "value": 128,
+        "mode": "binary"
+      }
+    },
+    {
+      "id": "blur",
+      "type": "box_blur",
+      "params": {
+        "size": 3
+      }
+    },
+    {
+      "id": "out",
+      "type": "output",
+      "params": {
+        "format": "PNG",
+        "suffix": "_processed"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "in",
+      "to": "gray"
+    },
+    {
+      "from": "gray",
+      "to": "thresh"
+    },
+    {
+      "from": "thresh",
+      "to": "blur"
+    },
+    {
+      "from": "blur",
+      "to": "out"
+    }
+  ],
+  "defaults": {
+    "output_format": "PNG"
+  }
+}

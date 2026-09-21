@@ -1,0 +1,51 @@
+{
+  "version": "1.0",
+  "name": "invalid_params_pipeline",
+  "description": "Contains multiple parameter errors for validation testing.",
+  "nodes": [
+    {
+      "id": "in",
+      "type": "input"
+    },
+    {
+      "id": "bad_blur",
+      "type": "box_blur",
+      "params": {
+        "size": 4
+      }
+    },
+    {
+      "id": "bad_resize",
+      "type": "resize",
+      "params": {
+        "scale": -1.0
+      }
+    },
+    {
+      "id": "bad_crop",
+      "type": "crop"
+    },
+    {
+      "id": "out",
+      "type": "output"
+    }
+  ],
+  "edges": [
+    {
+      "from": "in",
+      "to": "bad_blur"
+    },
+    {
+      "from": "bad_blur",
+      "to": "bad_resize"
+    },
+    {
+      "from": "bad_resize",
+      "to": "bad_crop"
+    },
+    {
+      "from": "bad_crop",
+      "to": "out"
+    }
+  ]
+}

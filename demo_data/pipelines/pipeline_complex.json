@@ -1,0 +1,80 @@
+{
+  "version": "1.0",
+  "name": "sample_complex_pipeline",
+  "description": "Example demonstrating parallel graph: grayscale feeds into sobel edge detection and also a brightness/contrast path. (Each branch writes to its own output.)",
+  "nodes": [
+    {
+      "id": "in",
+      "type": "input"
+    },
+    {
+      "id": "gray",
+      "type": "grayscale"
+    },
+    {
+      "id": "sobel",
+      "type": "sobel",
+      "params": {
+        "direction": "both"
+      }
+    },
+    {
+      "id": "bright",
+      "type": "brightness",
+      "params": {
+        "value": 20
+      }
+    },
+    {
+      "id": "contrast",
+      "type": "contrast",
+      "params": {
+        "value": 1.5
+      }
+    },
+    {
+      "id": "edges_out",
+      "type": "output",
+      "params": {
+        "format": "PNG",
+        "suffix": "_edges"
+      }
+    },
+    {
+      "id": "enhanced_out",
+      "type": "output",
+      "params": {
+        "format": "JPEG",
+        "quality": 90,
+        "suffix": "_enhanced"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "in",
+      "to": "gray"
+    },
+    {
+      "from": "gray",
+      "to": "sobel"
+    },
+    {
+      "from": "sobel",
+      "to": "edges_out"
+    },
+    {
+      "from": "gray",
+      "to": "bright"
+    },
+    {
+      "from": "bright",
+      "to": "contrast"
+    },
+    {
+      "from": "contrast",
+      "to": "enhanced_out"
+    }
+  ],
+  "defaults": {}
+}

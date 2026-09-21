@@ -1,0 +1,400 @@
+{
+  "summary": {
+    "total": 6,
+    "succeeded": 6,
+    "failed": 0,
+    "skipped": 0,
+    "total_duration_ms": 16.93
+  },
+  "config": {
+    "pipeline_file": "D:\\solo1\\projects\\t198\\demo_data\\pipelines\\pipeline_simple.json",
+    "input_dir": "D:\\solo1\\projects\\t198\\demo_data\\input_images",
+    "output_dir": "D:\\solo1\\projects\\t198\\demo_data\\output"
+  },
+  "results": [
+    {
+      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\checker_16x16.png",
+      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\checker_16x16_processed.png",
+      "success": true,
+      "duration_ms": 6.29,
+      "error": null,
+      "nodes": [
+        {
+          "node_id": "in",
+          "node_type": "input",
+          "success": true,
+          "duration_ms": 0.31,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "gray",
+          "node_type": "grayscale",
+          "success": true,
+          "duration_ms": 0.05,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "thresh",
+          "node_type": "threshold",
+          "success": true,
+          "duration_ms": 0.03,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "blur",
+          "node_type": "box_blur",
+          "success": true,
+          "duration_ms": 0.39,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "success": true,
+          "duration_ms": 5.48,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        }
+      ]
+    },
+    {
+      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\grad_32x32.png",
+      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\grad_32x32_processed.png",
+      "success": true,
+      "duration_ms": 2.39,
+      "error": null,
+      "nodes": [
+        {
+          "node_id": "in",
+          "node_type": "input",
+          "success": true,
+          "duration_ms": 0.41,
+          "error": null,
+          "output_size": [
+            32,
+            32
+          ]
+        },
+        {
+          "node_id": "gray",
+          "node_type": "grayscale",
+          "success": true,
+          "duration_ms": 0.16,
+          "error": null,
+          "output_size": [
+            32,
+            32
+          ]
+        },
+        {
+          "node_id": "thresh",
+          "node_type": "threshold",
+          "success": true,
+          "duration_ms": 0.06,
+          "error": null,
+          "output_size": [
+            32,
+            32
+          ]
+        },
+        {
+          "node_id": "blur",
+          "node_type": "box_blur",
+          "success": true,
+          "duration_ms": 1.37,
+          "error": null,
+          "output_size": [
+            32,
+            32
+          ]
+        },
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "success": true,
+          "duration_ms": 0.38,
+          "error": null,
+          "output_size": [
+            32,
+            32
+          ]
+        }
+      ]
+    },
+    {
+      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\grad_8x8.png",
+      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\grad_8x8_processed.png",
+      "success": true,
+      "duration_ms": 0.51,
+      "error": null,
+      "nodes": [
+        {
+          "node_id": "in",
+          "node_type": "input",
+          "success": true,
+          "duration_ms": 0.12,
+          "error": null,
+          "output_size": [
+            8,
+            8
+          ]
+        },
+        {
+          "node_id": "gray",
+          "node_type": "grayscale",
+          "success": true,
+          "duration_ms": 0.02,
+          "error": null,
+          "output_size": [
+            8,
+            8
+          ]
+        },
+        {
+          "node_id": "thresh",
+          "node_type": "threshold",
+          "success": true,
+          "duration_ms": 0.01,
+          "error": null,
+          "output_size": [
+            8,
+            8
+          ]
+        },
+        {
+          "node_id": "blur",
+          "node_type": "box_blur",
+          "success": true,
+          "duration_ms": 0.1,
+          "error": null,
+          "output_size": [
+            8,
+            8
+          ]
+        },
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "success": true,
+          "duration_ms": 0.25,
+          "error": null,
+          "output_size": [
+            8,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\noisy_grad_16x16.png",
+      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\noisy_grad_16x16_processed.png",
+      "success": true,
+      "duration_ms": 0.9,
+      "error": null,
+      "nodes": [
+        {
+          "node_id": "in",
+          "node_type": "input",
+          "success": true,
+          "duration_ms": 0.16,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "gray",
+          "node_type": "grayscale",
+          "success": true,
+          "duration_ms": 0.05,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "thresh",
+          "node_type": "threshold",
+          "success": true,
+          "duration_ms": 0.02,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "blur",
+          "node_type": "box_blur",
+          "success": true,
+          "duration_ms": 0.35,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        },
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "success": true,
+          "duration_ms": 0.32,
+          "error": null,
+          "output_size": [
+            16,
+            16
+          ]
+        }
+      ]
+    },
+    {
+      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\rect_12x12.png",
+      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\rect_12x12_processed.png",
+      "success": true,
+      "duration_ms": 0.71,
+      "error": null,
+      "nodes": [
+        {
+          "node_id": "in",
+          "node_type": "input",
+          "success": true,
+          "duration_ms": 0.13,
+          "error": null,
+          "output_size": [
+            12,
+            12
+          ]
+        },
+        {
+          "node_id": "gray",
+          "node_type": "grayscale",
+          "success": true,
+          "duration_ms": 0.03,
+          "error": null,
+          "output_size": [
+            12,
+            12
+          ]
+        },
+        {
+          "node_id": "thresh",
+          "node_type": "threshold",
+          "success": true,
+          "duration_ms": 0.01,
+          "error": null,
+          "output_size": [
+            12,
+            12
+          ]
+        },
+        {
+          "node_id": "blur",
+          "node_type": "box_blur",
+          "success": true,
+          "duration_ms": 0.22,
+          "error": null,
+          "output_size": [
+            12,
+            12
+          ]
+        },
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "success": true,
+          "duration_ms": 0.3,
+          "error": null,
+          "output_size": [
+            12,
+            12
+          ]
+        }
+      ]
+    },
+    {
+      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\tiny_5x5.png",
+      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\tiny_5x5_processed.png",
+      "success": true,
+      "duration_ms": 0.69,
+      "error": null,
+      "nodes": [
+        {
+          "node_id": "in",
+          "node_type": "input",
+          "success": true,
+          "duration_ms": 0.1,
+          "error": null,
+          "output_size": [
+            5,
+            5
+          ]
+        },
+        {
+          "node_id": "gray",
+          "node_type": "grayscale",
+          "success": true,
+          "duration_ms": 0.01,
+          "error": null,
+          "output_size": [
+            5,
+            5
+          ]
+        },
+        {
+          "node_id": "thresh",
+          "node_type": "threshold",
+          "success": true,
+          "duration_ms": 0.01,
+          "error": null,
+          "output_size": [
+            5,
+            5
+          ]
+        },
+        {
+          "node_id": "blur",
+          "node_type": "box_blur",
+          "success": true,
+          "duration_ms": 0.05,
+          "error": null,
+          "output_size": [
+            5,
+            5
+          ]
+        },
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "success": true,
+          "duration_ms": 0.52,
+          "error": null,
+          "output_size": [
+            5,
+            5
+          ]
+        }
+      ]
+    }
+  ]
+}
