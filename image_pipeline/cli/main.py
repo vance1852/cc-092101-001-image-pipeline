@@ -65,6 +65,27 @@ def cmd_run(args: argparse.Namespace) -> int:
     report = batch.run()
     if progress_cb is not None:
         sys.stdout.write('\n')
+    if report.status == 'preflight_rejected':
+        # No files were written; print the conflict report and use the
+        # dedicated exit code so operators can distinguish a pre-run refusal
+        # from execution/rollback failures.
+        if not args.no_report:
+            try:
+                report_path = batch.write_report(report)
+            except Exception as e:
+                print(f'ERROR: Failed to write JSON report: {e}', file=sys.stderr)
+                report_path = None
+        else:
+            report_path = None
+        if not args.quiet:
+            if report_path:
+                print(f'JSON report written to: {report_path}')
+            print()
+            print(print_text_report(report, verbose=args.verbose))
+        else:
+            for c in report.preflight_errors:
+                print(f'PREFLIGHT CONFLICT [{c["type"]}]: {c["target"]}', file=sys.stderr)
+        return 4
     if not args.no_report:
         report_path = batch.write_report(report)
         if not args.quiet:
@@ -196,21 +217,30 @@ def cmd_dry_run(args: argparse.Namespace) -> int:
     elif not images:
         print('  (no input images - no output files predicted)')
     else:
-        for img_path in images:
-            fname = os.path.basename(img_path)
-            stem, ext = os.path.splitext(fname)
-            for onode in output_nodes:
-                params = onode.effective_params()
-                suffix = params.get('suffix', '')
-                fmt = params.get('format')
-                if fmt:
-                    fmt_to_ext = {'PNG': '.png', 'JPEG': '.jpg', 'BMP': '.bmp', 'TIFF': '.tif', 'WEBP': '.webp'}
-                    out_ext = fmt_to_ext.get(str(fmt).upper(), ext or '.png')
+        from ..batch.executor import BatchExecutor
+        planner = BatchExecutor(executor, input_dir, output_dir)
+        plan = planner.plan_targets(images)
+        current_img = None
+        for item in plan:
+            if item['input_filename'] != current_img:
+                current_img = item['input_filename']
+                print(f'  {current_img}:')
+            print(f"    + [{item['node_id']}] -> {item['target']}")
+        conflicts = planner.detect_conflicts(images)
+        print()
+        if conflicts:
+            print('--- OUTPUT CONFLICTS (batch would be rejected) ---')
+            for c in conflicts:
+                if c['type'] == 'within_image':
+                    node_ids = c.get('node_ids') or sorted({s['node_id'] for s in c['sources']})
+                    print(f"  [within-image] nodes {node_ids} collide for {os.path.basename(c.get('input', ''))}: {c['target']}")
                 else:
-                    out_ext = ext or '.png'
-                out_name = f'{stem}{suffix}{out_ext}'
-                out_path = os.path.join(output_dir, out_name)
-                print(f'  {fname} + [{onode.node_id}] -> {out_path}')
+                    print(f"  [cross-image] multiple inputs resolve to: {c['target']}")
+                    for s in c['sources']:
+                        print(f"      {os.path.basename(s['input'])} via node '{s['node_id']}'")
+        else:
+            print('--- Conflict Check ---')
+            print('  No output path conflicts detected.')
     print()
     print('--- Summary ---')
     print(f'  Nodes           : {len(executor.execution_order)}')

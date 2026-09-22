@@ -1,8 +1,9 @@
 from typing import Any, Dict, List, Optional, Set, Tuple
 import time
 from collections import deque
-from ..nodes.definitions import PipelineNode, OutputNode
-from ..utils.types import NodeType, ValidationResult, ValidationError, ExecutionError, NodeExecutionResult, ImageProcessingResult
+from ..nodes.definitions import PipelineNode, OutputNode, TXN_CONTEXT_KEY, ARTIFACTS_CONTEXT_KEY
+from ..utils.types import NodeType, ValidationResult, ValidationError, ExecutionError, NodeExecutionResult, ImageProcessingResult, OutputArtifact, IMAGE_SUCCESS, IMAGE_FAILED, IMAGE_ROLLED_BACK
+from ..utils.transaction import OutputTransaction
 from ..algorithms.core import Image
 
 class PipelineGraph:
@@ -142,10 +143,18 @@ class PipelineExecutor:
         return list(self._order)
 
     def run(self, context: Dict[str, Any]=None) -> ImageProcessingResult:
-        context = context or {}
+        context = dict(context or {})
         overall_start = time.perf_counter()
         img_result = ImageProcessingResult(input_path=context.get('input_path', ''))
         cache: Dict[str, Image] = {}
+        output_dir = context.get('output_dir')
+        txn: Optional[OutputTransaction] = None
+        if output_dir and self.graph.get_output_nodes():
+            txn = OutputTransaction(output_dir)
+        artifacts_meta: List[Dict[str, Any]] = []
+        context[TXN_CONTEXT_KEY] = txn
+        context[ARTIFACTS_CONTEXT_KEY] = artifacts_meta
+        committed = False
         try:
             for nid in self._order:
                 node = self.graph.nodes[nid]
@@ -166,8 +175,11 @@ class PipelineExecutor:
                         node_result.output_size = (len(output_img[0]), len(output_img))
                     if isinstance(node, OutputNode):
                         out_path = node._execution_context.get(f'_output_{nid}_path')
-                        if out_path and img_result.output_path is None:
-                            img_result.output_path = out_path
+                        if out_path:
+                            node_result.output_path = out_path
+                            node_result.output_bytes = node._execution_context.get(f'_output_{nid}_bytes')
+                            if img_result.output_path is None:
+                                img_result.output_path = out_path
                     node_result.success = True
                 except Exception as e:
                     node_result.error = str(e)
@@ -176,13 +188,49 @@ class PipelineExecutor:
                     node_result.duration_ms = (time.perf_counter() - node_start) * 1000.0
                     img_result.node_results.append(node_result)
                     node.clear_context()
+            # All output nodes staged successfully -> group commit.
+            if txn is not None:
+                try:
+                    txn.commit()
+                except Exception as e:
+                    raise ExecutionError(f'Atomic commit of output files failed (rolled back): {e}') from e
+            committed = True
+            for nr in img_result.node_results:
+                if nr.output_path is not None:
+                    nr.committed = True
+            for meta in artifacts_meta:
+                img_result.outputs.append(OutputArtifact(node_id=meta['node_id'], node_type=meta['node_type'], path=meta['path'], bytes_size=meta['bytes'], width=meta.get('width'), height=meta.get('height'), success=True))
             img_result.success = True
+            img_result.status = IMAGE_SUCCESS
         except ExecutionError as e:
             img_result.success = False
             img_result.error = str(e)
+            if txn is not None and not committed and txn.has_staged:
+                txn.rollback()
+                img_result.status = IMAGE_ROLLED_BACK
+                for nr in img_result.node_results:
+                    if nr.output_path is not None and nr.committed is None:
+                        nr.committed = False
+                        nr.error = (nr.error + '; ' if nr.error else '') + 'staged but rolled back (multi-output commit failed)'
+                for meta in artifacts_meta:
+                    img_result.outputs.append(OutputArtifact(node_id=meta['node_id'], node_type=meta['node_type'], path=meta['path'], bytes_size=meta['bytes'], width=meta.get('width'), height=meta.get('height'), success=False, rolled_back=True, error='rolled back due to failure in another output node'))
+            else:
+                if txn is not None:
+                    txn.rollback()
+                img_result.status = IMAGE_FAILED
         except Exception as e:
             img_result.success = False
             img_result.error = f'Unexpected error: {e}'
+            if txn is not None and not committed and txn.has_staged:
+                txn.rollback()
+                img_result.status = IMAGE_ROLLED_BACK
+                for nr in img_result.node_results:
+                    if nr.output_path is not None and nr.committed is None:
+                        nr.committed = False
+            else:
+                if txn is not None:
+                    txn.rollback()
+                img_result.status = IMAGE_FAILED
         finally:
             for nid in self._order:
                 self.graph.nodes[nid].clear_context()

@@ -1,6 +1,7 @@
 from typing import Tuple
 from PIL import Image as PILImage
 import os
+import tempfile
 from ..algorithms.core import Image as AlgoImage, Pixel
 
 def pil_to_algo(pil_img: PILImage.Image) -> AlgoImage:
@@ -74,15 +75,25 @@ def read_image(path: str) -> AlgoImage:
     pil_img = PILImage.open(path)
     return pil_to_algo(pil_img)
 
-def write_image(img: AlgoImage, path: str, fmt: str=None, quality: int=90) -> None:
+def _encode_pil(pil_img: PILImage.Image, fmt: str, quality: int) -> bytes:
+    import io
+    buf = io.BytesIO()
+    save_kwargs = {}
+    if fmt == 'JPEG':
+        save_kwargs['quality'] = max(1, min(95, quality))
+        save_kwargs['optimize'] = True
+    elif fmt == 'PNG':
+        save_kwargs['optimize'] = True
+    pil_img.save(buf, format=fmt, **save_kwargs)
+    return buf.getvalue()
+
+def encode_image(img: AlgoImage, path: str, fmt: str=None, quality: int=90) -> Tuple[bytes, str]:
+    """Encode an image to an in-memory byte blob; no file is touched."""
     pil_img = algo_to_pil(img)
     if fmt is None:
         ext = os.path.splitext(path)[1].lower()
         format_map = {'.png': 'PNG', '.jpg': 'JPEG', '.jpeg': 'JPEG', '.bmp': 'BMP', '.tif': 'TIFF', '.tiff': 'TIFF', '.webp': 'WEBP'}
         fmt = format_map.get(ext, 'PNG')
-    out_dir = os.path.dirname(path)
-    if out_dir and (not os.path.exists(out_dir)):
-        os.makedirs(out_dir, exist_ok=True)
     if fmt == 'JPEG' and pil_img.mode in ('RGBA', 'LA', 'P'):
         bg = PILImage.new('RGB', pil_img.size, (255, 255, 255))
         if pil_img.mode == 'P':
@@ -91,13 +102,36 @@ def write_image(img: AlgoImage, path: str, fmt: str=None, quality: int=90) -> No
         pil_img = bg
     elif fmt == 'JPEG' and pil_img.mode != 'RGB':
         pil_img = pil_img.convert('RGB')
-    save_kwargs = {}
-    if fmt == 'JPEG':
-        save_kwargs['quality'] = max(1, min(95, quality))
-        save_kwargs['optimize'] = True
-    elif fmt == 'PNG':
-        save_kwargs['optimize'] = True
-    pil_img.save(path, format=fmt, **save_kwargs)
+    return _encode_pil(pil_img, fmt, quality), fmt
+
+def write_bytes_atomic(data: bytes, path: str) -> None:
+    """Write bytes to path atomically: a sibling temp file, fsync, os.replace.
+
+    A previous file at path stays intact until the replacement instant, so a
+    failure (disk full, crash) mid-write can never leave a truncated file in
+    place of the last valid one.
+    """
+    out_dir = os.path.dirname(path) or '.'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir, exist_ok=True)
+    fd, tmp_path = tempfile.mkstemp(prefix='.tmp_' + os.path.basename(path) + '_', dir=out_dir)
+    try:
+        with os.fdopen(fd, 'wb') as f:
+            f.write(data)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp_path, path)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+def write_image(img: AlgoImage, path: str, fmt: str=None, quality: int=90) -> None:
+    """Encode and atomically install the image at path (never clobbers on failure)."""
+    data, _ = encode_image(img, path, fmt=fmt, quality=quality)
+    write_bytes_atomic(data, path)
 
 def image_size(path: str) -> Tuple[int, int]:
     with PILImage.open(path) as img:

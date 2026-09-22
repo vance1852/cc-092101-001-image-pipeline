@@ -1,109 +1,160 @@
 {
+  "status": "complete_success",
   "summary": {
     "total": 6,
     "succeeded": 6,
     "failed": 0,
     "skipped": 0,
-    "total_duration_ms": 16.93
+    "total_duration_ms": 584.89
   },
   "config": {
-    "pipeline_file": "D:\\solo1\\projects\\t198\\demo_data\\pipelines\\pipeline_simple.json",
-    "input_dir": "D:\\solo1\\projects\\t198\\demo_data\\input_images",
-    "output_dir": "D:\\solo1\\projects\\t198\\demo_data\\output"
+    "pipeline_file": "/workspace/demo_data/pipelines/pipeline_simple.json",
+    "input_dir": "/workspace/demo_data/input_images",
+    "output_dir": "/workspace/demo_data/output"
   },
+  "preflight_errors": [],
   "results": [
     {
-      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\checker_16x16.png",
-      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\checker_16x16_processed.png",
+      "input": "/workspace/demo_data/input_images/checker_16x16.png",
+      "output": "/workspace/demo_data/output/checker_16x16_processed.png",
+      "status": "success",
       "success": true,
-      "duration_ms": 6.29,
+      "duration_ms": 81.09,
       "error": null,
+      "outputs": [
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "path": "/workspace/demo_data/output/checker_16x16_processed.png",
+          "bytes": 102,
+          "width": 16,
+          "height": 16,
+          "success": true,
+          "rolled_back": false,
+          "error": null
+        }
+      ],
       "nodes": [
         {
           "node_id": "in",
           "node_type": "input",
           "success": true,
-          "duration_ms": 0.31,
+          "duration_ms": 2.98,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "gray",
           "node_type": "grayscale",
           "success": true,
-          "duration_ms": 0.05,
+          "duration_ms": 0.08,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "thresh",
           "node_type": "threshold",
           "success": true,
-          "duration_ms": 0.03,
+          "duration_ms": 0.04,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "blur",
           "node_type": "box_blur",
           "success": true,
-          "duration_ms": 0.39,
+          "duration_ms": 0.57,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "out",
           "node_type": "output",
           "success": true,
-          "duration_ms": 5.48,
+          "duration_ms": 30.97,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": "/workspace/demo_data/output/checker_16x16_processed.png",
+          "output_bytes": 102,
+          "committed": true
         }
       ]
     },
     {
-      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\grad_32x32.png",
-      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\grad_32x32_processed.png",
+      "input": "/workspace/demo_data/input_images/grad_32x32.png",
+      "output": "/workspace/demo_data/output/grad_32x32_processed.png",
+      "status": "success",
       "success": true,
-      "duration_ms": 2.39,
+      "duration_ms": 65.21,
       "error": null,
+      "outputs": [
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "path": "/workspace/demo_data/output/grad_32x32_processed.png",
+          "bytes": 171,
+          "width": 32,
+          "height": 32,
+          "success": true,
+          "rolled_back": false,
+          "error": null
+        }
+      ],
       "nodes": [
         {
           "node_id": "in",
           "node_type": "input",
           "success": true,
-          "duration_ms": 0.41,
+          "duration_ms": 2.51,
           "error": null,
           "output_size": [
             32,
             32
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "gray",
           "node_type": "grayscale",
           "success": true,
-          "duration_ms": 0.16,
+          "duration_ms": 0.17,
           "error": null,
           "output_size": [
             32,
             32
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "thresh",
@@ -114,49 +165,75 @@
           "output_size": [
             32,
             32
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "blur",
           "node_type": "box_blur",
           "success": true,
-          "duration_ms": 1.37,
+          "duration_ms": 1.28,
           "error": null,
           "output_size": [
             32,
             32
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "out",
           "node_type": "output",
           "success": true,
-          "duration_ms": 0.38,
+          "duration_ms": 10.77,
           "error": null,
           "output_size": [
             32,
             32
-          ]
+          ],
+          "output_path": "/workspace/demo_data/output/grad_32x32_processed.png",
+          "output_bytes": 171,
+          "committed": true
         }
       ]
     },
     {
-      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\grad_8x8.png",
-      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\grad_8x8_processed.png",
+      "input": "/workspace/demo_data/input_images/grad_8x8.png",
+      "output": "/workspace/demo_data/output/grad_8x8_processed.png",
+      "status": "success",
       "success": true,
-      "duration_ms": 0.51,
+      "duration_ms": 65.89,
       "error": null,
+      "outputs": [
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "path": "/workspace/demo_data/output/grad_8x8_processed.png",
+          "bytes": 110,
+          "width": 8,
+          "height": 8,
+          "success": true,
+          "rolled_back": false,
+          "error": null
+        }
+      ],
       "nodes": [
         {
           "node_id": "in",
           "node_type": "input",
           "success": true,
-          "duration_ms": 0.12,
+          "duration_ms": 2.3,
           "error": null,
           "output_size": [
             8,
             8
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "gray",
@@ -167,7 +244,10 @@
           "output_size": [
             8,
             8
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "thresh",
@@ -178,60 +258,89 @@
           "output_size": [
             8,
             8
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "blur",
           "node_type": "box_blur",
           "success": true,
-          "duration_ms": 0.1,
+          "duration_ms": 0.11,
           "error": null,
           "output_size": [
             8,
             8
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "out",
           "node_type": "output",
           "success": true,
-          "duration_ms": 0.25,
+          "duration_ms": 11.74,
           "error": null,
           "output_size": [
             8,
             8
-          ]
+          ],
+          "output_path": "/workspace/demo_data/output/grad_8x8_processed.png",
+          "output_bytes": 110,
+          "committed": true
         }
       ]
     },
     {
-      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\noisy_grad_16x16.png",
-      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\noisy_grad_16x16_processed.png",
+      "input": "/workspace/demo_data/input_images/noisy_grad_16x16.png",
+      "output": "/workspace/demo_data/output/noisy_grad_16x16_processed.png",
+      "status": "success",
       "success": true,
-      "duration_ms": 0.9,
+      "duration_ms": 113.69,
       "error": null,
+      "outputs": [
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "path": "/workspace/demo_data/output/noisy_grad_16x16_processed.png",
+          "bytes": 162,
+          "width": 16,
+          "height": 16,
+          "success": true,
+          "rolled_back": false,
+          "error": null
+        }
+      ],
       "nodes": [
         {
           "node_id": "in",
           "node_type": "input",
           "success": true,
-          "duration_ms": 0.16,
+          "duration_ms": 3.71,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "gray",
           "node_type": "grayscale",
           "success": true,
-          "duration_ms": 0.05,
+          "duration_ms": 0.06,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "thresh",
@@ -242,49 +351,75 @@
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "blur",
           "node_type": "box_blur",
           "success": true,
-          "duration_ms": 0.35,
+          "duration_ms": 0.41,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "out",
           "node_type": "output",
           "success": true,
-          "duration_ms": 0.32,
+          "duration_ms": 46.56,
           "error": null,
           "output_size": [
             16,
             16
-          ]
+          ],
+          "output_path": "/workspace/demo_data/output/noisy_grad_16x16_processed.png",
+          "output_bytes": 162,
+          "committed": true
         }
       ]
     },
     {
-      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\rect_12x12.png",
-      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\rect_12x12_processed.png",
+      "input": "/workspace/demo_data/input_images/rect_12x12.png",
+      "output": "/workspace/demo_data/output/rect_12x12_processed.png",
+      "status": "success",
       "success": true,
-      "duration_ms": 0.71,
+      "duration_ms": 64.06,
       "error": null,
+      "outputs": [
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "path": "/workspace/demo_data/output/rect_12x12_processed.png",
+          "bytes": 69,
+          "width": 12,
+          "height": 12,
+          "success": true,
+          "rolled_back": false,
+          "error": null
+        }
+      ],
       "nodes": [
         {
           "node_id": "in",
           "node_type": "input",
           "success": true,
-          "duration_ms": 0.13,
+          "duration_ms": 2.52,
           "error": null,
           "output_size": [
             12,
             12
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "gray",
@@ -295,7 +430,10 @@
           "output_size": [
             12,
             12
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "thresh",
@@ -306,49 +444,75 @@
           "output_size": [
             12,
             12
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "blur",
           "node_type": "box_blur",
           "success": true,
-          "duration_ms": 0.22,
+          "duration_ms": 0.17,
           "error": null,
           "output_size": [
             12,
             12
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "out",
           "node_type": "output",
           "success": true,
-          "duration_ms": 0.3,
+          "duration_ms": 17.28,
           "error": null,
           "output_size": [
             12,
             12
-          ]
+          ],
+          "output_path": "/workspace/demo_data/output/rect_12x12_processed.png",
+          "output_bytes": 69,
+          "committed": true
         }
       ]
     },
     {
-      "input": "D:\\solo1\\projects\\t198\\demo_data\\input_images\\tiny_5x5.png",
-      "output": "D:\\solo1\\projects\\t198\\demo_data\\output\\tiny_5x5_processed.png",
+      "input": "/workspace/demo_data/input_images/tiny_5x5.png",
+      "output": "/workspace/demo_data/output/tiny_5x5_processed.png",
+      "status": "success",
       "success": true,
-      "duration_ms": 0.69,
+      "duration_ms": 60.61,
       "error": null,
+      "outputs": [
+        {
+          "node_id": "out",
+          "node_type": "output",
+          "path": "/workspace/demo_data/output/tiny_5x5_processed.png",
+          "bytes": 96,
+          "width": 5,
+          "height": 5,
+          "success": true,
+          "rolled_back": false,
+          "error": null
+        }
+      ],
       "nodes": [
         {
           "node_id": "in",
           "node_type": "input",
           "success": true,
-          "duration_ms": 0.1,
+          "duration_ms": 1.91,
           "error": null,
           "output_size": [
             5,
             5
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "gray",
@@ -359,7 +523,10 @@
           "output_size": [
             5,
             5
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "thresh",
@@ -370,29 +537,38 @@
           "output_size": [
             5,
             5
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "blur",
           "node_type": "box_blur",
           "success": true,
-          "duration_ms": 0.05,
+          "duration_ms": 0.04,
           "error": null,
           "output_size": [
             5,
             5
-          ]
+          ],
+          "output_path": null,
+          "output_bytes": null,
+          "committed": null
         },
         {
           "node_id": "out",
           "node_type": "output",
           "success": true,
-          "duration_ms": 0.52,
+          "duration_ms": 9.59,
           "error": null,
           "output_size": [
             5,
             5
-          ]
+          ],
+          "output_path": "/workspace/demo_data/output/tiny_5x5_processed.png",
+          "output_bytes": 96,
+          "committed": true
         }
       ]
     }

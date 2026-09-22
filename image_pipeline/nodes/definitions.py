@@ -1,9 +1,33 @@
 from typing import Any, Dict, List, Optional, Tuple
 import abc
+import os
 from ..algorithms import core as alg
 from ..utils.types import NodeType, ValidationResult, ValidationError, ExecutionError
-from ..utils.image_io import read_image, write_image
+from ..utils.image_io import read_image, encode_image, write_bytes_atomic
 from ..algorithms.core import Image
+
+# Context key under which an OutputTransaction may be supplied.
+TXN_CONTEXT_KEY = '_output_transaction'
+# Context key collecting per-node staged artifact metadata.
+ARTIFACTS_CONTEXT_KEY = '_output_artifacts'
+
+FMT_TO_EXT = {'PNG': '.png', 'JPEG': '.jpg', 'BMP': '.bmp', 'TIFF': '.tif', 'WEBP': '.webp'}
+
+
+def resolve_output_filename(input_filename: str, params: Dict[str, Any]) -> str:
+    """Predict the exact output filename for one output node configuration."""
+    stem, ext = os.path.splitext(os.path.basename(input_filename))
+    suffix = params.get('suffix', '') or ''
+    fmt = params.get('format')
+    if fmt:
+        out_ext = FMT_TO_EXT.get(str(fmt).upper(), ext or '.png')
+    else:
+        out_ext = ext if ext else '.png'
+    return f'{stem}{suffix}{out_ext}'
+
+
+def resolve_output_path(output_dir: str, input_filename: str, params: Dict[str, Any]) -> str:
+    return os.path.join(output_dir, resolve_output_filename(input_filename, params))
 
 class PipelineNode(abc.ABC):
     node_type: NodeType = None
@@ -359,20 +383,23 @@ class OutputNode(PipelineNode):
         input_filename = self._execution_context.get('input_filename')
         params = self.effective_params()
         if output_dir and input_filename:
-            import os
-            stem, ext = os.path.splitext(input_filename)
-            suffix = params.get('suffix', '')
-            fmt = params.get('format')
-            if fmt:
-                fmt_to_ext = {'PNG': '.png', 'JPEG': '.jpg', 'BMP': '.bmp', 'TIFF': '.tif', 'WEBP': '.webp'}
-                out_ext = fmt_to_ext.get(fmt.upper(), ext)
-            else:
-                out_ext = ext if ext else '.png'
-            out_name = f'{stem}{suffix}{out_ext}'
-            out_path = os.path.join(output_dir, out_name)
+            out_path = resolve_output_path(output_dir, input_filename, params)
             try:
-                write_image(img, out_path, fmt=fmt, quality=int(params.get('quality', 90)))
+                data, _fmt = encode_image(img, out_path, fmt=params.get('format'), quality=int(params.get('quality', 90)))
+                txn = self._execution_context.get(TXN_CONTEXT_KEY)
+                if txn is not None:
+                    # Stage only; the pipeline executor commits the whole group.
+                    txn.stage(out_path, data)
+                else:
+                    # Standalone use (no batch transaction): write atomically.
+                    write_bytes_atomic(data, out_path)
                 self._execution_context[f'_output_{self.node_id}_path'] = out_path
+                self._execution_context[f'_output_{self.node_id}_bytes'] = len(data)
+                artifacts = self._execution_context.get(ARTIFACTS_CONTEXT_KEY)
+                if artifacts is not None:
+                    h = len(img)
+                    w = len(img[0]) if h else 0
+                    artifacts.append({'node_id': self.node_id, 'node_type': self.node_type.value, 'path': out_path, 'bytes': len(data), 'width': w, 'height': h})
             except Exception as e:
                 raise ExecutionError(f"[{self.node_id}] Failed to write output to '{out_path}': {e}") from e
         return img
