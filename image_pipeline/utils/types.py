@@ -26,6 +26,18 @@ class ValidationError(PipelineError):
 class ExecutionError(PipelineError):
     pass
 
+# Lifecycle status of a batch / single image.
+#   complete          : every (valid) input produced every output node
+#   preflight_rejected: target conflicts detected before anything was written
+#   rolled_back       : a write failed mid-batch; all new files were removed
+#                       and every replaced file was restored
+#   failed            : one or more images failed for other reasons
+#                       (corrupt input, bad pixel, ...); partial output kept
+STATUS_COMPLETE = 'complete'
+STATUS_PREFLIGHT_REJECTED = 'preflight_rejected'
+STATUS_ROLLED_BACK = 'rolled_back'
+STATUS_FAILED = 'failed'
+
 @dataclass
 class ValidationIssue:
     level: str
@@ -83,6 +95,15 @@ class NodeExecutionResult:
     output_size: Optional[tuple] = None
 
 @dataclass
+class OutputArtifact:
+    """One file produced by one output node for one image."""
+    node_id: str
+    path: str
+    size_bytes: int
+    checksum: str = ''
+    image_size: Optional[tuple] = None
+
+@dataclass
 class ImageProcessingResult:
     input_path: str
     output_path: Optional[str] = None
@@ -90,6 +111,15 @@ class ImageProcessingResult:
     duration_ms: float = 0.0
     error: Optional[str] = None
     node_results: List[NodeExecutionResult] = field(default_factory=list)
+    # One entry per output node that produced a file. ``output_path`` is kept
+    # as the first artifact's path for backwards compatibility.
+    outputs: List[OutputArtifact] = field(default_factory=list)
+    status: str = STATUS_FAILED
+
+    def add_output(self, artifact: OutputArtifact) -> None:
+        self.outputs.append(artifact)
+        if self.output_path is None:
+            self.output_path = artifact.path
 
 @dataclass
 class BatchReport:
@@ -102,6 +132,17 @@ class BatchReport:
     pipeline_config_file: str = ''
     input_dir: str = ''
     output_dir: str = ''
+    status: str = STATUS_COMPLETE
+    # Human-readable reasons when the batch was rejected/rolled back.
+    conflicts: List[str] = field(default_factory=list)
+
+    @property
+    def preflight_rejected(self) -> bool:
+        return self.status == STATUS_PREFLIGHT_REJECTED
+
+    @property
+    def rolled_back(self) -> bool:
+        return self.status == STATUS_ROLLED_BACK
 
     def to_dict(self) -> Dict[str, Any]:
-        return {'summary': {'total': self.total, 'succeeded': self.succeeded, 'failed': self.failed, 'skipped': self.skipped, 'total_duration_ms': round(self.total_duration_ms, 2)}, 'config': {'pipeline_file': self.pipeline_config_file, 'input_dir': self.input_dir, 'output_dir': self.output_dir}, 'results': [{'input': r.input_path, 'output': r.output_path, 'success': r.success, 'duration_ms': round(r.duration_ms, 2), 'error': r.error, 'nodes': [{'node_id': nr.node_id, 'node_type': nr.node_type, 'success': nr.success, 'duration_ms': round(nr.duration_ms, 2), 'error': nr.error, 'output_size': list(nr.output_size) if nr.output_size else None} for nr in r.node_results]} for r in self.results]}
+        return {'status': self.status, 'summary': {'total': self.total, 'succeeded': self.succeeded, 'failed': self.failed, 'skipped': self.skipped, 'total_duration_ms': round(self.total_duration_ms, 2)}, 'config': {'pipeline_file': self.pipeline_config_file, 'input_dir': self.input_dir, 'output_dir': self.output_dir}, 'conflicts': list(self.conflicts), 'results': [{'input': r.input_path, 'output': r.output_path, 'status': r.status, 'success': r.success, 'duration_ms': round(r.duration_ms, 2), 'error': r.error, 'outputs': [{'node_id': o.node_id, 'path': o.path, 'size_bytes': o.size_bytes, 'checksum': o.checksum, 'image_size': list(o.image_size) if o.image_size else None} for o in r.outputs], 'nodes': [{'node_id': nr.node_id, 'node_type': nr.node_type, 'success': nr.success, 'duration_ms': round(nr.duration_ms, 2), 'error': nr.error, 'output_size': list(nr.output_size) if nr.output_size else None} for nr in r.node_results]} for r in self.results]}

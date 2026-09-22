@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import time
 from collections import deque
 from ..nodes.definitions import PipelineNode, OutputNode
-from ..utils.types import NodeType, ValidationResult, ValidationError, ExecutionError, NodeExecutionResult, ImageProcessingResult
+from ..utils.types import NodeType, ValidationResult, ValidationError, ExecutionError, NodeExecutionResult, ImageProcessingResult, OutputArtifact, STATUS_COMPLETE, STATUS_FAILED
 from ..algorithms.core import Image
 
 class PipelineGraph:
@@ -165,9 +165,16 @@ class PipelineExecutor:
                     if output_img and output_img[0]:
                         node_result.output_size = (len(output_img[0]), len(output_img))
                     if isinstance(node, OutputNode):
-                        out_path = node._execution_context.get(f'_output_{nid}_path')
-                        if out_path and img_result.output_path is None:
-                            img_result.output_path = out_path
+                        artifact_info = node._execution_context.get('_output_artifact')
+                        if artifact_info:
+                            artifact = OutputArtifact(
+                                node_id=artifact_info['node_id'],
+                                path=artifact_info['path'],
+                                size_bytes=artifact_info['size_bytes'],
+                                checksum=artifact_info.get('checksum', ''),
+                                image_size=artifact_info.get('image_size'),
+                            )
+                            img_result.add_output(artifact)
                     node_result.success = True
                 except Exception as e:
                     node_result.error = str(e)
@@ -177,11 +184,14 @@ class PipelineExecutor:
                     img_result.node_results.append(node_result)
                     node.clear_context()
             img_result.success = True
+            img_result.status = STATUS_COMPLETE
         except ExecutionError as e:
             img_result.success = False
+            img_result.status = STATUS_FAILED
             img_result.error = str(e)
         except Exception as e:
             img_result.success = False
+            img_result.status = STATUS_FAILED
             img_result.error = f'Unexpected error: {e}'
         finally:
             for nid in self._order:

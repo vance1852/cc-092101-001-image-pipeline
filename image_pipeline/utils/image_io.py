@@ -1,7 +1,9 @@
 from typing import Tuple
 from PIL import Image as PILImage
+import io
 import os
 from ..algorithms.core import Image as AlgoImage, Pixel
+from .atomic import atomic_write_bytes
 
 def pil_to_algo(pil_img: PILImage.Image) -> AlgoImage:
     if pil_img.mode not in ('RGB', 'RGBA', 'L', 'LA'):
@@ -74,15 +76,18 @@ def read_image(path: str) -> AlgoImage:
     pil_img = PILImage.open(path)
     return pil_to_algo(pil_img)
 
-def write_image(img: AlgoImage, path: str, fmt: str=None, quality: int=90) -> None:
+def encode_image(img: AlgoImage, path_hint: str='', fmt: str=None, quality: int=90) -> Tuple[bytes, str]:
+    """Render an image to encoded bytes without touching the filesystem.
+
+    Returns ``(data, format_name)``. The format follows the same resolution
+    rules as :func:`write_image`: explicit ``fmt`` wins, otherwise the
+    extension of ``path_hint`` decides (default PNG).
+    """
     pil_img = algo_to_pil(img)
     if fmt is None:
-        ext = os.path.splitext(path)[1].lower()
+        ext = os.path.splitext(path_hint)[1].lower()
         format_map = {'.png': 'PNG', '.jpg': 'JPEG', '.jpeg': 'JPEG', '.bmp': 'BMP', '.tif': 'TIFF', '.tiff': 'TIFF', '.webp': 'WEBP'}
         fmt = format_map.get(ext, 'PNG')
-    out_dir = os.path.dirname(path)
-    if out_dir and (not os.path.exists(out_dir)):
-        os.makedirs(out_dir, exist_ok=True)
     if fmt == 'JPEG' and pil_img.mode in ('RGBA', 'LA', 'P'):
         bg = PILImage.new('RGB', pil_img.size, (255, 255, 255))
         if pil_img.mode == 'P':
@@ -97,7 +102,16 @@ def write_image(img: AlgoImage, path: str, fmt: str=None, quality: int=90) -> No
         save_kwargs['optimize'] = True
     elif fmt == 'PNG':
         save_kwargs['optimize'] = True
-    pil_img.save(path, format=fmt, **save_kwargs)
+    buf = io.BytesIO()
+    pil_img.save(buf, format=fmt, **save_kwargs)
+    return buf.getvalue(), fmt
+
+def write_image(img: AlgoImage, path: str, fmt: str=None, quality: int=90) -> None:
+    data, _fmt = encode_image(img, path_hint=path, fmt=fmt, quality=quality)
+    out_dir = os.path.dirname(path)
+    if out_dir and (not os.path.exists(out_dir)):
+        os.makedirs(out_dir, exist_ok=True)
+    atomic_write_bytes(path, data)
 
 def image_size(path: str) -> Tuple[int, int]:
     with PILImage.open(path) as img:

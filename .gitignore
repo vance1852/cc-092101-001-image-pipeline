@@ -41,3 +41,7 @@ htmlcov/
 tmp/
 .tmp/
 *.tmp
+
+# Image pipeline crash-recovery journals / staging temp files
+.imgpipe-journal-*/
+.imgpipe-tmp-*

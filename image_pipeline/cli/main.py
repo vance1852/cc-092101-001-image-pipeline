@@ -2,12 +2,23 @@ import argparse
 import json
 import os
 import sys
-from typing import List, Optional
+from typing import Dict, List, Optional
 from .. import __version__
 from ..config.loader import load_config_file, validate_config_file
-from ..batch.executor import BatchExecutor, print_text_report
+from ..batch.executor import (
+    BatchExecutor,
+    print_text_report,
+    EXIT_COMPLETE,
+    EXIT_PARTIAL_FAIL,
+    EXIT_TOTAL_FAIL,
+    EXIT_SETUP_ERROR,
+    EXIT_PREFLIGHT_REJECTED,
+    EXIT_ROLLED_BACK,
+)
 from ..utils.sample_generator import generate_all
 from ..utils.image_io import find_images, SUPPORTED_EXTENSIONS
+from ..utils.targets import resolve_output_name
+from ..utils.types import STATUS_PREFLIGHT_REJECTED, STATUS_ROLLED_BACK
 
 def cmd_run(args: argparse.Namespace) -> int:
     config_path = os.path.abspath(args.config)
@@ -74,12 +85,24 @@ def cmd_run(args: argparse.Namespace) -> int:
     if not args.quiet:
         print()
         print(text_report)
+    if report.status == STATUS_PREFLIGHT_REJECTED:
+        # Structural target conflicts: nothing was written. Distinct from a
+        # processing failure so operators can fix the config and rerun.
+        if args.quiet:
+            for c in report.conflicts:
+                print(f'PREFLIGHT CONFLICT: {c}', file=sys.stderr)
+        return EXIT_PREFLIGHT_REJECTED
+    if report.status == STATUS_ROLLED_BACK:
+        # Disk-level failure; all partially written files were rolled back.
+        if args.quiet:
+            print('ERROR: output commit failed and the batch was rolled back; previous valid outputs preserved. See JSON report for details.', file=sys.stderr)
+        return EXIT_ROLLED_BACK
     if report.succeeded == report.total:
-        return 0
+        return EXIT_COMPLETE
     elif report.succeeded > 0 and report.failed > 0:
-        return 1
+        return EXIT_PARTIAL_FAIL
     else:
-        return 2
+        return EXIT_TOTAL_FAIL
 
 def cmd_validate(args: argparse.Namespace) -> int:
     config_path = os.path.abspath(args.config)
@@ -196,21 +219,32 @@ def cmd_dry_run(args: argparse.Namespace) -> int:
     elif not images:
         print('  (no input images - no output files predicted)')
     else:
+        seen_targets = {}
         for img_path in images:
             fname = os.path.basename(img_path)
-            stem, ext = os.path.splitext(fname)
             for onode in output_nodes:
-                params = onode.effective_params()
-                suffix = params.get('suffix', '')
-                fmt = params.get('format')
-                if fmt:
-                    fmt_to_ext = {'PNG': '.png', 'JPEG': '.jpg', 'BMP': '.bmp', 'TIFF': '.tif', 'WEBP': '.webp'}
-                    out_ext = fmt_to_ext.get(str(fmt).upper(), ext or '.png')
-                else:
-                    out_ext = ext or '.png'
-                out_name = f'{stem}{suffix}{out_ext}'
+                out_name, _out_ext, _fmt = resolve_output_name(fname, onode.effective_params())
                 out_path = os.path.join(output_dir, out_name)
                 print(f'  {fname} + [{onode.node_id}] -> {out_path}')
+                seen_targets.setdefault(os.path.normcase(out_name), set()).add((fname, onode.node_id))
+        conflicts = []
+        for name, owners in seen_targets.items():
+            files = {f for f, _n in owners}
+            per_file_nodes: Dict[str, set] = {}
+            for f, n in owners:
+                per_file_nodes.setdefault(f, set()).add(n)
+            if len(files) > 1:
+                conflicts.append((name, owners))
+            elif any(len(nodes) > 1 for nodes in per_file_nodes.values()):
+                conflicts.append((name, owners))
+        print()
+        if conflicts:
+            print('  !! PREDICTED TARGET CONFLICTS (run will be rejected by preflight):')
+            for name, owners in conflicts:
+                detail = ', '.join(f'{f} via {n}' for f, n in sorted(owners))
+                print(f'     - {name}: {detail}')
+        else:
+            print('  No target conflicts predicted.')
     print()
     print('--- Summary ---')
     print(f'  Nodes           : {len(executor.execution_order)}')

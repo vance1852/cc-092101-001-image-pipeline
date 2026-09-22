@@ -1,8 +1,11 @@
 from typing import Any, Dict, List, Optional, Tuple
 import abc
+import os
 from ..algorithms import core as alg
 from ..utils.types import NodeType, ValidationResult, ValidationError, ExecutionError
-from ..utils.image_io import read_image, write_image
+from ..utils.image_io import read_image, encode_image
+from ..utils.targets import resolve_output_name
+from ..utils.atomic import atomic_write_bytes, checksum256
 from ..algorithms.core import Image
 
 class PipelineNode(abc.ABC):
@@ -357,24 +360,34 @@ class OutputNode(PipelineNode):
         img = inputs[0]
         output_dir = self._execution_context.get('output_dir')
         input_filename = self._execution_context.get('input_filename')
+        if not (output_dir and input_filename):
+            # Nothing to write; keep the processed image flowing in case the
+            # node is used inside a harness without a filesystem context.
+            return img
         params = self.effective_params()
-        if output_dir and input_filename:
-            import os
-            stem, ext = os.path.splitext(input_filename)
-            suffix = params.get('suffix', '')
-            fmt = params.get('format')
-            if fmt:
-                fmt_to_ext = {'PNG': '.png', 'JPEG': '.jpg', 'BMP': '.bmp', 'TIFF': '.tif', 'WEBP': '.webp'}
-                out_ext = fmt_to_ext.get(fmt.upper(), ext)
+        out_name, _out_ext, fmt = resolve_output_name(input_filename, params)
+        quality = int(params.get('quality', 90))
+        try:
+            data, resolved_fmt = encode_image(img, path_hint=out_name, fmt=fmt, quality=quality)
+        except Exception as e:
+            raise ExecutionError(f"[{self.node_id}] Failed to encode output '{out_name}': {e}") from e
+        width = len(img[0]) if img and img[0] else 0
+        height = len(img)
+        sink = self._execution_context.get('output_sink')
+        try:
+            if sink is not None:
+                # Batch executor controls the atomic commit; hand off the
+                # encoded bytes and let it return the final absolute path.
+                out_path = sink(self.node_id, out_name, data)
             else:
-                out_ext = ext if ext else '.png'
-            out_name = f'{stem}{suffix}{out_ext}'
-            out_path = os.path.join(output_dir, out_name)
-            try:
-                write_image(img, out_path, fmt=fmt, quality=int(params.get('quality', 90)))
-                self._execution_context[f'_output_{self.node_id}_path'] = out_path
-            except Exception as e:
-                raise ExecutionError(f"[{self.node_id}] Failed to write output to '{out_path}': {e}") from e
+                out_path = os.path.join(output_dir, out_name)
+                atomic_write_bytes(out_path, data)
+        except Exception as e:
+            raise ExecutionError(f"[{self.node_id}] Failed to write output to '{out_name}': {e}") from e
+        artifact = {'node_id': self.node_id, 'path': out_path, 'size_bytes': len(data), 'checksum': checksum256(data), 'image_size': (width, height), 'format': resolved_fmt}
+        self._execution_context['_output_artifact'] = artifact
+        # Backwards-compatible key used by earlier engine versions.
+        self._execution_context[f'_output_{self.node_id}_path'] = out_path
         return img
 NODE_TYPE_MAP: Dict[str, type] = {NodeType.INPUT.value: InputNode, NodeType.GRAYSCALE.value: GrayscaleNode, NodeType.BRIGHTNESS.value: BrightnessNode, NodeType.CONTRAST.value: ContrastNode, NodeType.THRESHOLD.value: ThresholdNode, NodeType.BOX_BLUR.value: BoxBlurNode, NodeType.GAUSSIAN_BLUR.value: GaussianBlurNode, NodeType.SHARPEN.value: SharpenNode, NodeType.SOBEL.value: SobelNode, NodeType.PREWITT.value: PrewittNode, NodeType.CROP.value: CropNode, NodeType.RESIZE.value: ResizeNode, NodeType.OUTPUT.value: OutputNode}
 
